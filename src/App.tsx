@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import "./App.css";
 
 type Person = {
@@ -375,6 +375,8 @@ type BurstItem = {
   delayMs: number;
   durationMs: number;
   driftPx: number;
+  swayPx: number;
+  swayDurationMs: number;
   rotateDeg: number;
   scale: number;
 };
@@ -449,14 +451,13 @@ function App() {
   const isOpening = selected ? Boolean(openingById[selected.id]) : false;
   const lauraRequiredClicks = 5;
   const lauraGame = presentGameById.l ?? { clicks: 0, x: 50, y: 38, popToken: 0 };
-  const lauraRemainingClicks = Math.max(lauraRequiredClicks - lauraGame.clicks, 0);
   const lauraPresentEmoji = lauraGame.clicks >= lauraRequiredClicks - 1 ? "❤️" : lauraGame.clicks >= 2 ? "📦" : "🎁";
 
   const startOpenSequence = (personId: Person["id"]) => {
     if (openingInFlightRef.current.has(personId) || openingById[personId] || revealedById[personId]) return;
     openingInFlightRef.current.add(personId);
 
-    const burstCount = 18;
+    const burstCount = 22;
     const now = Date.now();
     const burst: BurstItem[] = Array.from({ length: burstCount }, (_, idx) => {
       const emoji = christmasPool[Math.floor(Math.random() * christmasPool.length)];
@@ -464,11 +465,13 @@ function App() {
         id: `${personId}-${now}-${idx}`,
         emoji,
         x: 6 + Math.random() * 88,
-        delayMs: Math.floor(Math.random() * 220),
-        durationMs: 1600 + Math.floor(Math.random() * 700),
+        delayMs: Math.floor(Math.random() * 900),
+        durationMs: 3800 + Math.floor(Math.random() * 2200),
         driftPx: Math.floor(Math.random() * 120 - 60),
-        rotateDeg: Math.floor(Math.random() * 160 - 80),
-        scale: 0.9 + Math.random() * 0.6,
+        swayPx: 18 + Math.floor(Math.random() * 42),
+        swayDurationMs: 1600 + Math.floor(Math.random() * 1800),
+        rotateDeg: Math.floor(Math.random() * 60 - 30),
+        scale: 0.8 + Math.random() * 0.8,
       };
     });
 
@@ -481,21 +484,18 @@ function App() {
       window.setTimeout(() => {
         openingInFlightRef.current.delete(personId);
         setBurstById((prev) => ({ ...prev, [personId]: [] }));
-      }, 700);
-    }, 1900);
+      }, 1200);
+    }, 4200);
   };
 
-  useEffect(() => {
-    if (selected?.emoji) {
-      setLastSelectedEmoji(selected.emoji);
-    }
-  }, [selected?.emoji]);
+  const handleSelect = (person: Person) => {
+    setLastSelectedEmoji(person.emoji);
+    setSelected(person);
+  };
 
-  useEffect(() => {
-    if (lauraGame.clicks >= lauraRequiredClicks) {
-      startOpenSequence("l");
-    }
-  }, [lauraGame.clicks, lauraRequiredClicks]);
+  const handleBack = () => {
+    setSelected(null);
+  };
 
   return (
     <div className={`app${selected ? ` app-detail${isRevealed ? " app-revealed" : " app-locked"}` : " app-home"}`}>
@@ -535,7 +535,7 @@ function App() {
               <p>Kosketus avaa henkilökohtaisen videon ja tarinan.</p>
               <div className="button-container button-large">
                 {people.map((person) => (
-                  <button key={person.id} onClick={() => setSelected(person)}>
+                  <button key={person.id} onClick={() => handleSelect(person)}>
                     <img className="icon-img" src={getTwemojiUrl(person.emoji)} alt="" aria-hidden="true" loading="lazy" />
                     {person.label}
                   </button>
@@ -550,7 +550,7 @@ function App() {
             {selected ? (
               <div className="detail content">
                 <div className="detail-top">
-                  <button className="ghost" onClick={() => setSelected(null)}>
+                  <button className="ghost" onClick={handleBack}>
                     ← Takaisin
                   </button>
                   <div className="detail-title">
@@ -580,6 +580,8 @@ function App() {
                                 "--delay": `${item.delayMs}ms`,
                                 "--dur": `${item.durationMs}ms`,
                                 "--dx": `${item.driftPx}px`,
+                                "--sway": `${item.swayPx}px`,
+                                "--swayDur": `${item.swayDurationMs}ms`,
                                 "--rot": `${item.rotateDeg}deg`,
                                 "--scale": item.scale,
                               } as React.CSSProperties
@@ -606,9 +608,10 @@ function App() {
                           if (isRevealed) return;
                           event.preventDefault();
                           event.stopPropagation();
+                          const nextClicks = Math.min(lauraGame.clicks + 1, lauraRequiredClicks);
                           setPresentGameById((prev) => {
                             const current = prev.l ?? { clicks: 0, x: 50, y: 38, popToken: 0 };
-                            const nextClicks = Math.min(current.clicks + 1, lauraRequiredClicks);
+                            const safeNextClicks = Math.max(nextClicks, Math.min(current.clicks + 1, lauraRequiredClicks));
                             const minDistance = 42;
                             let bestX = current.x;
                             let bestY = current.y;
@@ -637,13 +640,16 @@ function App() {
                             return {
                               ...prev,
                               l: {
-                                clicks: nextClicks,
+                                clicks: safeNextClicks,
                                 x: bestX,
                                 y: bestY,
                                 popToken: current.popToken + 1,
                               },
                             };
                           });
+                          if (nextClicks >= lauraRequiredClicks) {
+                            startOpenSequence("l");
+                          }
                         }}
                         onKeyDown={(event) => {
                           if (isRevealed) return;
@@ -664,6 +670,7 @@ function App() {
                         </span>
                       ) : null}
                       <span className="present-title">Avaa lahja</span>
+                      {isOpening ? <span className="present-subtitle">Aukeaa...</span> : null}
                     </span>
                   </button>
                   <div className="reveal-video" aria-hidden={!isRevealed}>
