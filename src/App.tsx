@@ -21,7 +21,7 @@ const twemojiMap: Record<string, string> = {
   "🎅": "1f385",
 };
 
-const scatterPool = ["🌸", "💀", "❤️", "🐱", "🎮", "✨"];
+const scatterPool = ["🌸", "💀", "❤️", "🐱", "🎮", "✨", "🎁", "🎄", "🎅"];
 const christmasPool = ["🎅", "🎄", "🎁"];
 
 const getTwemojiUrl = (emoji: string) => `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/${twemojiMap[emoji] ?? "2753"}.svg`;
@@ -368,6 +368,16 @@ const lyricsByPersonId: Partial<Record<Person["id"], string>> = {
   m: minnaLyrics,
 };
 
+const lyricsHeadingByPersonId: Partial<Record<Person["id"], string>> = {
+  b: "Häävalssi",
+  j: "Pelipäivä",
+  k: "Syöttömestari",
+  l: "Kissoja, koruja, koodia",
+  m: "Nostetaan jalkatuet",
+};
+
+const getLyricsHeading = (person: Person) => lyricsHeadingByPersonId[person.id] ?? `${person.label} – sanat`;
+
 type BurstItem = {
   id: string;
   emoji: string;
@@ -432,14 +442,14 @@ function App() {
         label: "Laura",
         emoji: "🐱",
         videoId: "msB0hvX1gZE",
-        accent: "#ff9a32",
+        accent: "#4caf50",
       },
       {
         id: "j",
         label: "Juuso",
         emoji: "🎮",
         videoId: "EQA2a5ehu_Y",
-        accent: "#4caf50",
+        accent: "#3a8bff",
       },
     ],
     []
@@ -447,6 +457,7 @@ function App() {
 
   const [selected, setSelected] = useState<Person | null>(null);
   const selectedLyrics = selected ? lyricsByPersonId[selected.id] : null;
+  const selectedHeading = selected ? getLyricsHeading(selected) : null;
   const isRevealed = selected ? Boolean(revealedById[selected.id]) : false;
   const isOpening = selected ? Boolean(openingById[selected.id]) : false;
   const lauraRequiredClicks = 5;
@@ -531,8 +542,8 @@ function App() {
           <header className="app-header">
             <div className="content">
               <p className="eyebrow">Mattilan Klaani</p>
-              <h1>Valitse oma sivu</h1>
-              <p>Kosketus avaa henkilökohtaisen videon ja tarinan.</p>
+              <h1>Hyvää joulua! 🎅</h1>
+              <p>Tässä ovat joululahjanne, siis kaikki mitä saatte tänäjouluna.</p>
               <div className="button-container button-large">
                 {people.map((person) => (
                   <button key={person.id} onClick={() => handleSelect(person)}>
@@ -688,9 +699,10 @@ function App() {
                 </div>
                 <div className={`lyrics-wrap${isRevealed && selectedLyrics ? " visible" : ""}`} aria-hidden={!isRevealed || !selectedLyrics}>
                   {isRevealed && selectedLyrics ? (
-                    <pre className="lyrics-text" aria-label={`${selected.label} biisin sanat`}>
-                      {stripBracketedSections(selectedLyrics)}
-                    </pre>
+                    <div className="lyrics-text" role="region" aria-label={`${selectedHeading ?? selected.label} biisin sanat`}>
+                      <div className="lyrics-heading">{selectedHeading}</div>
+                      <pre className="lyrics-body">{stripBracketedSections(selectedLyrics)}</pre>
+                    </div>
                   ) : null}
                 </div>
               </div>
