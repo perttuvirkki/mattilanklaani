@@ -19,10 +19,12 @@ const twemojiMap: Record<string, string> = {
   "🎁": "1f381",
   "🎄": "1f384",
   "🎅": "1f385",
+  "🖕": "1f595",
 };
 
 const scatterPool = ["🌸", "💀", "❤️", "🐱", "🎮", "✨", "🎁", "🎄", "🎅"];
 const christmasPool = ["🎅", "🎄", "🎁"];
+const lauraBurstPool = ["🖕", "❤️"];
 
 const getTwemojiUrl = (emoji: string) => `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/${twemojiMap[emoji] ?? "2753"}.svg`;
 
@@ -460,9 +462,10 @@ function App() {
   const selectedHeading = selected ? getLyricsHeading(selected) : null;
   const isRevealed = selected ? Boolean(revealedById[selected.id]) : false;
   const isOpening = selected ? Boolean(openingById[selected.id]) : false;
-  const lauraRequiredClicks = 5;
+  const lauraRequiredClicks = 7;
   const lauraGame = presentGameById.l ?? { clicks: 0, x: 50, y: 38, popToken: 0 };
-  const lauraPresentEmoji = lauraGame.clicks >= lauraRequiredClicks - 1 ? "❤️" : lauraGame.clicks >= 2 ? "📦" : "🎁";
+  const lauraPresentEmoji = lauraGame.clicks >= lauraRequiredClicks - 1 ? "🖕" : lauraGame.clicks >= 4 ? "📦" : "🎁";
+  const lauraIsReady = lauraGame.clicks >= lauraRequiredClicks;
 
   const startOpenSequence = (personId: Person["id"]) => {
     if (openingInFlightRef.current.has(personId) || openingById[personId] || revealedById[personId]) return;
@@ -470,8 +473,9 @@ function App() {
 
     const burstCount = 22;
     const now = Date.now();
+    const burstPool = personId === "l" ? lauraBurstPool : christmasPool;
     const burst: BurstItem[] = Array.from({ length: burstCount }, (_, idx) => {
-      const emoji = christmasPool[Math.floor(Math.random() * christmasPool.length)];
+      const emoji = burstPool[Math.floor(Math.random() * burstPool.length)];
       return {
         id: `${personId}-${now}-${idx}`,
         emoji,
@@ -543,7 +547,7 @@ function App() {
             <div className="content">
               <p className="eyebrow">Mattilan Klaani</p>
               <h1>Hyvää joulua! 🎅</h1>
-              <p>Tässä ovat joululahjanne, siis kaikki mitä saatte tänäjouluna.</p>
+              <p>Ho Ho Ho! Joulutervehdykset täältä fistelin oksan alta! Pukki on jättänyt muutaman lahjan tänne kololle. Hyvää joulua!</p>
               <div className="button-container button-large">
                 {people.map((person) => (
                   <button key={person.id} onClick={() => handleSelect(person)}>
@@ -669,7 +673,11 @@ function App() {
                           (event.currentTarget as HTMLSpanElement).click();
                         }}
                       >
-                        <span className={`present-emoji${lauraGame.popToken > 0 ? " popping" : ""}`} aria-hidden="true" key={lauraGame.popToken}>
+                        <span
+                          className={`present-emoji${lauraGame.popToken > 0 ? " popping" : ""}${selected.id === "l" && lauraIsReady ? " hidden" : ""}`}
+                          aria-hidden="true"
+                          key={lauraGame.popToken}
+                        >
                           {lauraPresentEmoji}
                         </span>
                       </span>
@@ -680,7 +688,7 @@ function App() {
                           🎁
                         </span>
                       ) : null}
-                      <span className="present-title">Avaa lahja</span>
+                      {!(selected.id === "l" && lauraIsReady) ? <span className="present-title">Avaa lahja</span> : null}
                       {isOpening ? <span className="present-subtitle">Aukeaa...</span> : null}
                     </span>
                   </button>
