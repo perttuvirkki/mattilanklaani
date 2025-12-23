@@ -547,7 +547,9 @@ function App() {
             <div className="content">
               <p className="eyebrow">Mattilan Klaani</p>
               <h1>Hyvää joulua! 🎅</h1>
-              <p>Ho Ho Ho! Joulutervehdykset täältä fistelin oksan alta! Pukki on jättänyt muutaman lahjan tänne kololle. Hyvää joulua!</p>
+              <p>
+                Ho Ho Ho! Joulutervehdykset täältä fistelin oksan alta! Pukki on jättänyt muutaman lahjan ja ruskean suukon tälle kololle eksyville!
+              </p>
               <div className="button-container button-large">
                 {people.map((person) => (
                   <button key={person.id} onClick={() => handleSelect(person)}>
@@ -674,7 +676,9 @@ function App() {
                         }}
                       >
                         <span
-                          className={`present-emoji${lauraGame.popToken > 0 ? " popping" : ""}${selected.id === "l" && lauraIsReady ? " hidden" : ""}`}
+                          className={`present-emoji${lauraGame.popToken > 0 ? " popping" : ""}${
+                            selected.id === "l" && lauraIsReady ? " hidden" : ""
+                          }`}
                           aria-hidden="true"
                           key={lauraGame.popToken}
                         >
